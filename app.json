@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.kitchen-butler"
+      "bundleIdentifier": "uk.kitchenbutler.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.kitchen_butler"
+      "package": "uk.kitchenbutler.app"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
