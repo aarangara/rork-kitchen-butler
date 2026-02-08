@@ -22,12 +22,17 @@ function getRCToken(): string | undefined {
   });
 }
 
-const revenueCatApiKey = getRCToken();
-if (revenueCatApiKey) {
-  console.log('[RevenueCat] Configuring Purchases');
-  Purchases.configure({ apiKey: revenueCatApiKey });
-} else {
-  console.warn('[RevenueCat] Missing API key. Purchases not configured.');
+let rcConfigured = false;
+function ensureRCConfigured() {
+  if (rcConfigured || Platform.OS === 'web') return;
+  const key = getRCToken();
+  if (key) {
+    console.log('[RevenueCat] Configuring Purchases');
+    Purchases.configure({ apiKey: key });
+    rcConfigured = true;
+  } else {
+    console.warn('[RevenueCat] Missing API key. Purchases not configured.');
+  }
 }
 
 
@@ -62,6 +67,24 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     expiresAt: null,
   });
 
+  useEffect(() => {
+    ensureRCConfigured();
+  }, []);
+
+  const { mutate: saveUsage } = useMutation({
+    mutationFn: async (usage: DailyUsage) => {
+      await AsyncStorage.setItem(USAGE_KEY, JSON.stringify(usage));
+      return usage;
+    },
+  });
+
+  const { mutate: saveSubscription } = useMutation({
+    mutationFn: async (sub: SubscriptionState) => {
+      await AsyncStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(sub));
+      return sub;
+    },
+  });
+
   const subscriptionQuery = useQuery({
     queryKey: ['subscription'],
     queryFn: async () => {
@@ -78,12 +101,15 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     },
   });
 
+  const isNative = Platform.OS !== 'web';
+
   const offeringsQuery = useQuery({
     queryKey: ['rcOfferings'],
     queryFn: async (): Promise<PurchasesOfferings> => {
       console.log('[RevenueCat] Fetching offerings');
       return Purchases.getOfferings();
     },
+    enabled: isNative && rcConfigured,
   });
 
   const customerInfoQuery = useQuery({
@@ -92,6 +118,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       console.log('[RevenueCat] Fetching customer info');
       return Purchases.getCustomerInfo();
     },
+    enabled: isNative && rcConfigured,
   });
 
   const usageQuery = useQuery({
@@ -148,20 +175,6 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     saveSubscription(newSub);
     console.log('[RevenueCat] No active entitlement');
   }, [customerInfoQuery.data, saveSubscription]);
-
-  const { mutate: saveUsage } = useMutation({
-    mutationFn: async (usage: DailyUsage) => {
-      await AsyncStorage.setItem(USAGE_KEY, JSON.stringify(usage));
-      return usage;
-    },
-  });
-
-  const { mutate: saveSubscription } = useMutation({
-    mutationFn: async (sub: SubscriptionState) => {
-      await AsyncStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(sub));
-      return sub;
-    },
-  });
 
   const isPremium = useMemo(() => {
     return subscription.plan === 'premium';
@@ -234,9 +247,10 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     },
   });
 
+  const { mutate: purchasePkg } = purchaseMutation;
   const upgradeToPremium = useCallback((pkg: PurchasesPackage) => {
-    purchaseMutation.mutate(pkg);
-  }, [purchaseMutation]);
+    purchasePkg(pkg);
+  }, [purchasePkg]);
 
   const downgradeToFree = useCallback(() => {
     const newSub: SubscriptionState = {
