@@ -37,7 +37,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Good to see you!</Text>
-            <Text style={styles.title}>Help Me Cook</Text>
+            <Text style={styles.title}>Kitchen Butler</Text>
           </View>
           <TouchableOpacity 
             style={styles.addButton}

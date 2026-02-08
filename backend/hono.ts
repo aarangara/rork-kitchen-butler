@@ -35,7 +35,7 @@ app.use(
 );
 
 app.get("/", (c) => {
-  return c.json({ status: "ok", message: "HelpMeCook API is running" });
+  return c.json({ status: "ok", message: "Kitchen Butler API is running" });
 });
 
 app.get("/health", (c) => {
