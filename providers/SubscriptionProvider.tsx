@@ -24,12 +24,13 @@ function getRCToken(): string | undefined {
 
 let rcConfigured = false;
 function ensureRCConfigured() {
-  if (rcConfigured || Platform.OS === 'web') return;
+  if (rcConfigured) return;
   const key = getRCToken();
   if (key) {
-    console.log('[RevenueCat] Configuring Purchases');
+    console.log('[RevenueCat] Configuring Purchases with key:', key.substring(0, 8) + '...');
     Purchases.configure({ apiKey: key });
     rcConfigured = true;
+    console.log('[RevenueCat] Configuration complete');
   } else {
     console.warn('[RevenueCat] Missing API key. Purchases not configured.');
   }
@@ -101,15 +102,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     },
   });
 
-  const isNative = Platform.OS !== 'web';
-
   const offeringsQuery = useQuery({
     queryKey: ['rcOfferings'],
     queryFn: async (): Promise<PurchasesOfferings> => {
       console.log('[RevenueCat] Fetching offerings');
       return Purchases.getOfferings();
     },
-    enabled: isNative && rcConfigured,
+    enabled: rcConfigured,
   });
 
   const customerInfoQuery = useQuery({
@@ -118,7 +117,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       console.log('[RevenueCat] Fetching customer info');
       return Purchases.getCustomerInfo();
     },
-    enabled: isNative && rcConfigured,
+    enabled: rcConfigured,
   });
 
   const usageQuery = useQuery({
@@ -210,6 +209,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const purchaseMutation = useMutation({
     mutationFn: async (pkg: PurchasesPackage): Promise<CustomerInfo> => {
+      if (!rcConfigured) {
+        throw new Error('RevenueCat is not configured. Please try again later.');
+      }
       console.log('[RevenueCat] Purchasing package', pkg.identifier);
       const result = await Purchases.purchasePackage(pkg);
       return result.customerInfo;
@@ -235,6 +237,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const restoreMutation = useMutation({
     mutationFn: async (): Promise<CustomerInfo> => {
+      if (!rcConfigured) {
+        throw new Error('RevenueCat is not configured. Please try again later.');
+      }
       console.log('[RevenueCat] Restoring purchases');
       return Purchases.restorePurchases();
     },
