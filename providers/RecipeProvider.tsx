@@ -475,21 +475,21 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     });
   }, [saveRecipes, savePantry]);
 
-  const backendRecipesQuery = backendEnabled ? trpc.recipes.list.useQuery(
+  const backendRecipesQuery = trpc.recipes.list.useQuery(
     undefined,
-    { enabled: true, staleTime: 5 * 60 * 1000 }
-  ) : { data: undefined };
+    { enabled: backendEnabled, staleTime: 5 * 60 * 1000, retry: 1, retryDelay: 5000 }
+  );
 
-  const backendPantryQuery = backendEnabled ? trpc.pantry.list.useQuery(
+  const backendPantryQuery = trpc.pantry.list.useQuery(
     undefined,
-    { enabled: true, staleTime: 5 * 60 * 1000 }
-  ) : { data: undefined };
+    { enabled: backendEnabled, staleTime: 5 * 60 * 1000, retry: 1, retryDelay: 5000 }
+  );
 
-  const recipeSyncMutation = backendEnabled ? trpc.recipes.sync.useMutation() : null;
-  const pantrySyncMutation = backendEnabled ? trpc.pantry.sync.useMutation() : null;
+  const recipeSyncMutation = trpc.recipes.sync.useMutation();
+  const pantrySyncMutation = trpc.pantry.sync.useMutation();
 
   const syncToBackendFn = useCallback(async () => {
-    if (!backendEnabled || !recipeSyncMutation || !pantrySyncMutation) return;
+    if (!backendEnabled) return;
     setIsSyncing(true);
     console.log('Starting sync to backend...');
 
@@ -517,12 +517,21 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         metadata: { recipeCount: recipes.length, pantryCount: pantryItems.length },
       });
     } catch (error) {
-      console.error('Sync failed:', error);
-      logAuditEvent('SYNC_ERROR', 'Failed to sync to backend', {
-        severity: 'error',
-        metadata: { error: error instanceof Error ? error.message : 'Unknown' },
-      });
-      throw error;
+      const isNetworkError = error instanceof Error && 
+        (error.message.includes('NetworkError') || 
+         error.message.includes('fetch') || 
+         error.message.includes('network') ||
+         error.message.includes('Failed to fetch'));
+      
+      if (isNetworkError) {
+        console.warn('Sync skipped: backend unreachable');
+      } else {
+        console.error('Sync failed:', error);
+        logAuditEvent('SYNC_ERROR', 'Failed to sync to backend', {
+          severity: 'error',
+          metadata: { error: error instanceof Error ? error.message : 'Unknown' },
+        });
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -550,7 +559,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   }, [backendEnabled, recipes, pantryItems, syncToBackendFn]);
 
   useEffect(() => {
-    if (backendEnabled && backendRecipesQuery.data && backendRecipesQuery.data.recipes.length > recipes.length) {
+    if (backendEnabled && backendRecipesQuery.data && backendRecipesQuery.data.recipes?.length > recipes.length) {
       console.log(`Backend has ${backendRecipesQuery.data.recipes.length} recipes, local has ${recipes.length}`);
       const merged = [...recipes];
       backendRecipesQuery.data.recipes.forEach(serverRecipe => {
@@ -567,7 +576,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   }, [backendRecipesQuery.data, backendEnabled, recipes, saveRecipes]);
 
   useEffect(() => {
-    if (backendEnabled && backendPantryQuery.data && backendPantryQuery.data.items.length > pantryItems.length) {
+    if (backendEnabled && backendPantryQuery.data && backendPantryQuery.data.items?.length > pantryItems.length) {
       console.log(`Backend has ${backendPantryQuery.data.items.length} pantry items, local has ${pantryItems.length}`);
       const merged = [...pantryItems];
       backendPantryQuery.data.items.forEach(serverItem => {
