@@ -25,7 +25,7 @@ export async function query<T = unknown>(sql: string, vars?: Record<string, unkn
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
       'NS': namespace,
-      'DB': 'helpmecook',
+      'DB': 'kitchenbutler',
     },
     body,
   });

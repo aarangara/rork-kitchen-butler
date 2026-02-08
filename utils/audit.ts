@@ -41,9 +41,9 @@ export interface AuditEvent {
   outcome: 'success' | 'failure' | 'blocked';
 }
 
-const AUDIT_STORAGE_KEY = 'helpmecook_audit_log';
+const AUDIT_STORAGE_KEY = 'kitchenbutler_audit_log';
 const MAX_AUDIT_ENTRIES = 1000;
-const SESSION_ID_KEY = 'helpmecook_session_id';
+const SESSION_ID_KEY = 'kitchenbutler_session_id';
 
 let currentSessionId: string | null = null;
 let auditCache: AuditEvent[] = [];

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const ENCRYPTION_KEY_STORAGE = 'helpmecook_enc_key';
+const ENCRYPTION_KEY_STORAGE = 'kitchenbutler_enc_key';
 const IV_LENGTH = 16;
 const KEY_LENGTH = 32;
 

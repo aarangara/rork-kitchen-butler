@@ -9,8 +9,8 @@ import Purchases, {
   CustomerInfo,
 } from 'react-native-purchases';
 
-const USAGE_KEY = 'helpmecook_daily_usage';
-const SUBSCRIPTION_KEY = 'helpmecook_subscription';
+const USAGE_KEY = 'kitchenbutler_daily_usage';
+const SUBSCRIPTION_KEY = 'kitchenbutler_subscription';
 const RC_ENTITLEMENT = 'pro';
 
 function getRCToken(): string | undefined {

@@ -91,7 +91,7 @@ export const RATE_LIMITS = {
   PANTRY_UPDATE: { maxRequests: 50, windowMs: 60 * 1000 },
 } as const;
 
-const STORAGE_PREFIX = 'helpmecook_secure_';
+const STORAGE_PREFIX = 'kitchenbutler_secure_';
 
 export async function secureStore(key: string, data: unknown): Promise<void> {
   try {

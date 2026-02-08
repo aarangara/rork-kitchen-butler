@@ -137,7 +137,9 @@ export default function PaywallScreen() {
   }, [selectedPackage, packages, formatPackageLabel]);
 
   const selectedPrice = useMemo(() => {
-    return selectedPackage?.product?.priceString ?? packages[0]?.product?.priceString ?? '£7';
+    if (selectedPackage?.product?.priceString) return selectedPackage.product.priceString;
+    if (packages[0]?.product?.priceString) return packages[0].product.priceString;
+    return selectedLabel === 'Yearly' ? '£70' : '£7';
   }, [selectedPackage, packages]);
 
   useEffect(() => {
@@ -314,7 +316,7 @@ export default function PaywallScreen() {
                 <View style={styles.planInfo}>
                   <Text style={styles.planName}>{formatPackageLabel(pkg)}</Text>
                   <Text style={styles.planPrice}>
-                    {pkg.product?.priceString ?? '£7'}
+                    {pkg.product?.priceString ?? (pkg.identifier === 'annual' ? '£70' : '£7')}
                     <Text style={styles.planPeriod}>/{formatPackageLabel(pkg).toLowerCase()}</Text>
                   </Text>
                 </View>

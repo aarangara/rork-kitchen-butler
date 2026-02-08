@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
 
-const ONBOARDING_KEY = 'helpmecook_onboarding';
-const USER_PREFS_KEY = 'helpmecook_user_prefs';
+const ONBOARDING_KEY = 'kitchenbutler_onboarding';
+const USER_PREFS_KEY = 'kitchenbutler_user_prefs';
 
 export interface UserPreferences {
   cookingLevel: 'beginner' | 'intermediate' | 'advanced' | null;

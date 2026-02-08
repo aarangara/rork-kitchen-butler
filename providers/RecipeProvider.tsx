@@ -16,9 +16,9 @@ import { logAuditEvent } from '@/utils/audit';
 import { memoryCache, createCacheKey, compressData, decompressData } from '@/utils/cache';
 import { trpc, isBackendEnabled } from '@/lib/trpc';
 
-const RECIPES_KEY = 'helpmecook_recipes';
-const PANTRY_KEY = 'helpmecook_pantry';
-const LAST_SYNC_KEY = 'helpmecook_last_sync';
+const RECIPES_KEY = 'kitchenbutler_recipes';
+const PANTRY_KEY = 'kitchenbutler_pantry';
+const LAST_SYNC_KEY = 'kitchenbutler_last_sync';
 
 const MAX_RECIPES = 500;
 const MAX_PANTRY_ITEMS = 1000;

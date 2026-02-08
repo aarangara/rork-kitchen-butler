@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -25,9 +27,13 @@ import {
   Shield,
   FileText,
   Info,
+  Mail,
+  CreditCard,
+  Trash2,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import colors from '@/constants/colors';
 import { useOnboarding, UserPreferences } from '@/providers/OnboardingProvider';
 import { useSubscription, FREE_LIMITS } from '@/providers/SubscriptionProvider';
@@ -434,6 +440,95 @@ export default function SettingsScreen() {
         </View>
 
 
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account & Support</Text>
+
+          {isPremium && (
+            <TouchableOpacity
+              style={styles.legalRow}
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('https://apps.apple.com/account/subscriptions');
+                } else if (Platform.OS === 'android') {
+                  Linking.openURL('https://play.google.com/store/account/subscriptions');
+                } else {
+                  Linking.openURL('https://apps.apple.com/account/subscriptions');
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.settingIcon, { backgroundColor: '#FFF3E0' }]}>
+                <CreditCard size={22} color="#FF9800" />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingLabel}>Manage Subscription</Text>
+                <Text style={styles.settingValue}>Change or cancel your plan</Text>
+              </View>
+              <ChevronRight size={20} color={colors.textLight} />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.legalRow}
+            onPress={() => {
+              Linking.openURL('mailto:support@kitchenbutler.uk');
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.settingIcon, { backgroundColor: '#E8F5E9' }]}>
+              <Mail size={22} color="#4CAF50" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingLabel}>Contact Support</Text>
+              <Text style={styles.settingValue}>support@kitchenbutler.uk</Text>
+            </View>
+            <ChevronRight size={20} color={colors.textLight} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.legalRow}
+            onPress={() => {
+              Alert.alert(
+                'Delete Account',
+                'This will permanently delete all your data including recipes, pantry items, and preferences. This action cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete Everything',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        const keys = await AsyncStorage.getAllKeys();
+                        const appKeys = keys.filter(k => k.startsWith('kitchenbutler_'));
+                        await AsyncStorage.multiRemove(appKeys);
+                        if (Platform.OS !== 'web') {
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }
+                        Alert.alert('Account Deleted', 'All your data has been removed. The app will now reset.', [
+                          { text: 'OK', onPress: () => router.replace('/onboarding') },
+                        ]);
+                      } catch (error) {
+                        console.error('[Settings] Delete account failed:', error);
+                        Alert.alert('Error', 'Failed to delete account data. Please try again.');
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.settingIcon, { backgroundColor: '#FFEBEE' }]}>
+              <Trash2 size={22} color="#E53935" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingLabel, { color: '#E53935' }]}>Delete Account</Text>
+              <Text style={styles.settingValue}>Remove all data permanently</Text>
+            </View>
+            <ChevronRight size={20} color={colors.textLight} />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Legal</Text>
