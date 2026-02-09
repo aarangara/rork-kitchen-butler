@@ -19,17 +19,15 @@ const getBaseUrl = () => {
 
 const baseUrl = getBaseUrl();
 
-export const trpcClient = baseUrl 
-  ? trpc.createClient({
-      links: [
-        httpLink({
-          url: `${baseUrl}/api/trpc`,
-          transformer: superjson,
-        }),
-      ],
-    })
-  : null;
+export const trpcClient = trpc.createClient({
+  links: [
+    httpLink({
+      url: baseUrl ? `${baseUrl}/api/trpc` : 'http://localhost:0/api/trpc',
+      transformer: superjson,
+    }),
+  ],
+});
 
 export const isBackendEnabled = (): boolean => {
-  return !!baseUrl && !!trpcClient;
+  return !!baseUrl;
 };

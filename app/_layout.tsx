@@ -8,7 +8,7 @@ import { PerformanceProvider } from "@/providers/PerformanceProvider";
 import { OnboardingProvider, useOnboarding } from "@/providers/OnboardingProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { trpc, trpcClient, isBackendEnabled } from "@/lib/trpc";
+import { trpc, trpcClient } from "@/lib/trpc";
 import colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -99,36 +99,20 @@ function RootLayoutNav() {
 }
 
 function AppProviders({ children }: { children: React.ReactNode }) {
-  if (isBackendEnabled() && trpcClient) {
-    return (
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <PerformanceProvider>
-            <OnboardingProvider>
-              <SubscriptionProvider>
-                <RecipeProvider>
-                  {children}
-                </RecipeProvider>
-              </SubscriptionProvider>
-            </OnboardingProvider>
-          </PerformanceProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
-    );
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <PerformanceProvider>
-        <OnboardingProvider>
-          <SubscriptionProvider>
-            <RecipeProvider>
-              {children}
-            </RecipeProvider>
-          </SubscriptionProvider>
-        </OnboardingProvider>
-      </PerformanceProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <PerformanceProvider>
+          <OnboardingProvider>
+            <SubscriptionProvider>
+              <RecipeProvider>
+                {children}
+              </RecipeProvider>
+            </SubscriptionProvider>
+          </OnboardingProvider>
+        </PerformanceProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
 
