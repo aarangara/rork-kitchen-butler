@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigationContainerRef } from 'expo-router';
 import {
   X,
   Crown,
@@ -64,6 +64,16 @@ const FEATURES = [
 export default function PaywallScreen() {
   console.log('[PaywallScreen] Rendering paywall screen');
   const router = useRouter();
+  const navigationRef = useNavigationContainerRef();
+
+  const safeGoBack = useCallback(() => {
+    if (navigationRef.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [router, navigationRef]);
+
   const {
     isPremium,
     upgradeToPremium,
@@ -171,11 +181,11 @@ export default function PaywallScreen() {
       Alert.alert(
         'Welcome to Premium!',
         'You now have unlimited access to all features.',
-        [{ text: 'Let\'s Cook!', onPress: () => router.back() }]
+        [{ text: 'Let\'s Cook!', onPress: () => safeGoBack() }]
       );
     }
     wasPremium.current = isPremium;
-  }, [isPremium, router]);
+  }, [isPremium, safeGoBack]);
 
   if (isPremium) {
     return (
@@ -184,7 +194,7 @@ export default function PaywallScreen() {
           <Crown size={48} color="#FFB347" />
           <Text style={styles.alreadyTitle}>You{"'"}re Premium!</Text>
           <Text style={styles.alreadyDesc}>You already have unlimited access to everything.</Text>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} testID="paywall-back">
+          <TouchableOpacity style={styles.backBtn} onPress={() => safeGoBack()} testID="paywall-back">
             <Text style={styles.backBtnText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -197,7 +207,7 @@ export default function PaywallScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <TouchableOpacity
           style={styles.closeButton}
-          onPress={() => router.back()}
+          onPress={() => safeGoBack()}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           testID="paywall-close"
         >

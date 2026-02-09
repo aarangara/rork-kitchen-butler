@@ -133,8 +133,15 @@ export default function OnboardingScreen() {
       handleComplete();
       return;
     }
-    router.push('/paywall');
-  }, [isPremium, handleComplete]);
+    const prefs: Partial<UserPreferences> = {
+      cookingLevel: selectedLevel as UserPreferences['cookingLevel'],
+      dietaryRestrictions: selectedDietary.filter(d => d !== 'none'),
+      householdSize,
+    };
+    updatePreferences(prefs);
+    completeOnboarding();
+    router.replace('/paywall');
+  }, [isPremium, handleComplete, selectedLevel, selectedDietary, householdSize, updatePreferences, completeOnboarding]);
 
   const handleNext = useCallback(() => {
     if (Platform.OS !== 'web') {
