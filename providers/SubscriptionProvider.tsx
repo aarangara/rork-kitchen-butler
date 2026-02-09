@@ -143,15 +143,25 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     queryKey: ['rcOfferings'],
     queryFn: async (): Promise<PurchasesOfferings> => {
       try {
-        console.log('[RevenueCat] Fetching offerings');
-        return await Purchases.getOfferings();
+        console.log('[RevenueCat] Fetching offerings, attempt starting...');
+        const offerings = await Purchases.getOfferings();
+        console.log('[RevenueCat] Offerings fetched:', JSON.stringify({
+          hasCurrent: !!offerings.current,
+          currentPackages: offerings.current?.availablePackages?.length ?? 0,
+          allKeys: Object.keys(offerings.all ?? {}),
+        }));
+        if (!offerings.current && Object.keys(offerings.all ?? {}).length === 0) {
+          throw new Error('No offerings returned from RevenueCat. Products may not be configured in the store.');
+        }
+        return offerings;
       } catch (error) {
         console.error('[RevenueCat] Failed to fetch offerings:', error);
         throw error;
       }
     },
     enabled: isRCReady && rcAvailable,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 8000),
   });
 
   const customerInfoQuery = useQuery({
@@ -327,6 +337,8 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     downgradeToFree,
     offerings: offeringsQuery.data?.current ?? null,
     isLoadingOfferings: offeringsQuery.isLoading,
+    offeringsError: offeringsQuery.error,
+    refetchOfferings: offeringsQuery.refetch,
     purchaseError: purchaseMutation.error,
     isPurchasing: purchaseMutation.isPending,
     restorePurchases: restoreMutation.mutate,

@@ -79,6 +79,8 @@ export default function PaywallScreen() {
     upgradeToPremium,
     offerings,
     isLoadingOfferings,
+    offeringsError,
+    refetchOfferings,
     isPurchasing,
     purchaseError,
     restorePurchases,
@@ -311,7 +313,22 @@ export default function PaywallScreen() {
             <Text style={styles.planLoading}>Loading plans...</Text>
           )}
           {!isLoadingOfferings && packages.length === 0 && (
-            <Text style={styles.planError}>Plans are unavailable right now. Please try again later.</Text>
+            <View style={styles.planErrorContainer}>
+              <Text style={styles.planError}>
+                {offeringsError
+                  ? 'Failed to load plans. Check your connection and try again.'
+                  : 'Plans are unavailable right now. Please try again.'}
+              </Text>
+              <TouchableOpacity
+                style={styles.retryBtn}
+                onPress={() => refetchOfferings()}
+                activeOpacity={0.7}
+                testID="paywall-retry"
+              >
+                <RefreshCw size={14} color={colors.white} />
+                <Text style={styles.retryBtnText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           )}
           {packages.map((pkg) => {
             const isSelected = selectedPackage?.identifier === pkg.identifier;
@@ -464,9 +481,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
   },
+  planErrorContainer: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
   planError: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.error,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  retryBtnText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.white,
   },
   planCard: {
     borderWidth: 1,
