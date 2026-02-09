@@ -74,11 +74,11 @@ export class ErrorBoundary extends Component<Props, State> {
               We encountered an unexpected error. Please try again.
             </Text>
 
-            {__DEV__ && this.state.error && (
+            {this.state.error && (
               <ScrollView style={styles.errorDetails} showsVerticalScrollIndicator={false}>
                 <Text style={styles.errorTitle}>Error Details:</Text>
                 <Text style={styles.errorText}>{this.state.error.message}</Text>
-                {this.state.error.stack && (
+                {__DEV__ && this.state.error.stack && (
                   <Text style={styles.stackText}>
                     {this.state.error.stack.slice(0, 500)}...
                   </Text>

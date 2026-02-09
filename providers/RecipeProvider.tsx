@@ -53,7 +53,14 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       try {
         const stored = await AsyncStorage.getItem(RECIPES_KEY);
         if (stored) {
-          const decompressed = stored.startsWith('\x00') ? decompressData(stored) : stored;
+          let decompressed: string;
+          try {
+            decompressed = stored.startsWith('\x00') ? decompressData(stored) : stored;
+          } catch (decompressError) {
+            console.error('Failed to decompress recipes, resetting:', decompressError);
+            await AsyncStorage.removeItem(RECIPES_KEY);
+            return mockRecipes;
+          }
           const parsed = JSON.parse(decompressed) as Recipe[];
           const limited = parsed.slice(0, MAX_RECIPES);
           memoryCache.set(cacheKey, limited, 10 * 60 * 1000);
@@ -92,7 +99,14 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       try {
         const stored = await AsyncStorage.getItem(PANTRY_KEY);
         if (stored) {
-          const decompressed = stored.startsWith('\x00') ? decompressData(stored) : stored;
+          let decompressed: string;
+          try {
+            decompressed = stored.startsWith('\x00') ? decompressData(stored) : stored;
+          } catch (decompressError) {
+            console.error('Failed to decompress pantry, resetting:', decompressError);
+            await AsyncStorage.removeItem(PANTRY_KEY);
+            return mockPantryItems;
+          }
           const parsed = JSON.parse(decompressed) as PantryItem[];
           const limited = parsed.slice(0, MAX_PANTRY_ITEMS);
           memoryCache.set(cacheKey, limited, 10 * 60 * 1000);
@@ -477,16 +491,34 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
 
   const backendRecipesQuery = trpc.recipes.list.useQuery(
     undefined,
-    { enabled: backendEnabled, staleTime: 5 * 60 * 1000, retry: 1, retryDelay: 5000 }
+    { 
+      enabled: backendEnabled, 
+      staleTime: 5 * 60 * 1000, 
+      retry: 1, 
+      retryDelay: 5000,
+    }
   );
 
   const backendPantryQuery = trpc.pantry.list.useQuery(
     undefined,
-    { enabled: backendEnabled, staleTime: 5 * 60 * 1000, retry: 1, retryDelay: 5000 }
+    { 
+      enabled: backendEnabled, 
+      staleTime: 5 * 60 * 1000, 
+      retry: 1, 
+      retryDelay: 5000,
+    }
   );
 
-  const recipeSyncMutation = trpc.recipes.sync.useMutation();
-  const pantrySyncMutation = trpc.pantry.sync.useMutation();
+  const recipeSyncMutation = trpc.recipes.sync.useMutation({
+    onError: (error) => {
+      console.error('Recipe sync mutation failed:', error);
+    },
+  });
+  const pantrySyncMutation = trpc.pantry.sync.useMutation({
+    onError: (error) => {
+      console.error('Pantry sync mutation failed:', error);
+    },
+  });
 
   const syncToBackendFn = useCallback(async () => {
     if (!backendEnabled) return;

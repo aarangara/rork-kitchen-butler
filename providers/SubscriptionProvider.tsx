@@ -23,17 +23,44 @@ function getRCToken(): string | undefined {
 }
 
 let rcConfigured = false;
+let rcAvailable = true;
+
+function checkRCAvailable(): boolean {
+  try {
+    if (!Purchases || typeof Purchases.configure !== 'function') {
+      console.warn('[RevenueCat] Native module not available');
+      return false;
+    }
+    return true;
+  } catch {
+    console.warn('[RevenueCat] Native module not available');
+    return false;
+  }
+}
+
 function ensureRCConfigured(): boolean {
   if (rcConfigured) return true;
+  if (!rcAvailable) return false;
+  
   const key = getRCToken();
-  if (key) {
+  if (!key) {
+    console.warn('[RevenueCat] Missing API key. Purchases not configured.');
+    return false;
+  }
+  
+  try {
+    if (!checkRCAvailable()) {
+      rcAvailable = false;
+      return false;
+    }
     console.log('[RevenueCat] Configuring Purchases with key:', key.substring(0, 8) + '...');
     Purchases.configure({ apiKey: key });
     rcConfigured = true;
     console.log('[RevenueCat] Configuration complete');
     return true;
-  } else {
-    console.warn('[RevenueCat] Missing API key. Purchases not configured.');
+  } catch (error) {
+    console.error('[RevenueCat] Configuration failed:', error);
+    rcAvailable = false;
     return false;
   }
 }
@@ -72,9 +99,14 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const [isRCReady, setIsRCReady] = useState<boolean>(rcConfigured);
 
   useEffect(() => {
-    const configured = ensureRCConfigured();
-    setIsRCReady(configured);
-    console.log('[RevenueCat] isRCReady set to:', configured);
+    try {
+      const configured = ensureRCConfigured();
+      setIsRCReady(configured);
+      console.log('[RevenueCat] isRCReady set to:', configured);
+    } catch (error) {
+      console.error('[RevenueCat] Setup error:', error);
+      setIsRCReady(false);
+    }
   }, []);
 
   const { mutate: saveUsage } = useMutation({
@@ -110,19 +142,31 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const offeringsQuery = useQuery({
     queryKey: ['rcOfferings'],
     queryFn: async (): Promise<PurchasesOfferings> => {
-      console.log('[RevenueCat] Fetching offerings');
-      return Purchases.getOfferings();
+      try {
+        console.log('[RevenueCat] Fetching offerings');
+        return await Purchases.getOfferings();
+      } catch (error) {
+        console.error('[RevenueCat] Failed to fetch offerings:', error);
+        throw error;
+      }
     },
-    enabled: isRCReady,
+    enabled: isRCReady && rcAvailable,
+    retry: 1,
   });
 
   const customerInfoQuery = useQuery({
     queryKey: ['rcCustomerInfo'],
     queryFn: async (): Promise<CustomerInfo> => {
-      console.log('[RevenueCat] Fetching customer info');
-      return Purchases.getCustomerInfo();
+      try {
+        console.log('[RevenueCat] Fetching customer info');
+        return await Purchases.getCustomerInfo();
+      } catch (error) {
+        console.error('[RevenueCat] Failed to fetch customer info:', error);
+        throw error;
+      }
     },
-    enabled: isRCReady,
+    enabled: isRCReady && rcAvailable,
+    retry: 1,
   });
 
   const usageQuery = useQuery({
